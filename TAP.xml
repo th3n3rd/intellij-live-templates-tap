@@ -1,0 +1,458 @@
+<templateSet group="TAP">
+  <template name="tap gitops secret" value="# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.6/tap/scc-gitops-vs-regops.html#ssh-4&#10;apiVersion: v1&#10;kind: Secret&#10;metadata:&#10;  name: $SECRET_NAME$ # it must match the &quot;gitops_ssh_secret&quot; params in the workload&#10;  annotations:&#10;    tekton.dev/git-0: $GIT_REPO_HOSTNAME$ # make sure is just the hostname, no protocol&#10;type: kubernetes.io/ssh-auth&#10;stringData:&#10;  ssh-privatekey: |&#10;    # ...&#10;  identity: |&#10;    # ...&#10;  identity.pub: |&#10;    # ...&#10;  known_hosts: |&#10;    # ...&#10;$END$" description="TAP: GitOps SSH secret definition" toReformat="false" toShortenFQNames="true">
+    <variable name="SECRET_NAME" expression="" defaultValue="git-ssh-auth" alwaysStopAt="true" />
+    <variable name="GIT_REPO_HOSTNAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap gitops workload params" value="# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.6/tap/scc-gitops-vs-regops.html#gitops-workload-parameters-5&#10;- name: gitops_server_address&#10;  value: $GIT_REPO_SERVER$  # must specify the protocol, e.g. ssh://&#10;- name: gitops_repository_owner&#10;  value: $GIT_USER$&#10;- name: gitops_repository_name&#10;  value: $GITOPS_REPO_NAME$&#10;- name: gitops_branch&#10;  value: dev&#10;- name: gitops_commit_message&#10;  value: &quot;Update $APP_NAME$ config&quot;&#10;- name: gitops_ssh_secret&#10;  value: $GITOPS_SECRET_NAME$&#10;$END$" description="TAP: GitOps workload parameters" toReformat="false" toShortenFQNames="true">
+    <variable name="GIT_REPO_SERVER" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="GIT_USER" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="GITOPS_REPO_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="APP_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="GITOPS_SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap gitops deliverable" value="# https://cartographer.sh/docs/v0.6.0/reference/deliverable/#deliverable&#10;apiVersion: carto.run/v1alpha1&#10;kind: Deliverable&#10;metadata:&#10;  name: $WORKLOAD_NAME$&#10;  labels:&#10;    app.kubernetes.io/part-of: $WORKLOAD_NAME$ # should match the one in the workload&#10;    apps.tanzu.vmware.com/workload-type: web&#10;    app.kubernetes.io/component: deliverable&#10;    app.tanzu.vmware.com/deliverable-type: web&#10;spec:&#10;  params:&#10;  - name: gitops_ssh_secret&#10;    value: $GITOPS_SECRET_NAME$ # it must match the &quot;gitops_ssh_secret&quot; params in the workload&#10;  source:&#10;    git:&#10;      url: ssh://$GITOPS_REPO_URL$ # important to leave the protocol as ssh://&#10;      ref:&#10;        branch: $ENV$&#10;    subPath: config/$NAMESPACE$/$WORKLOAD_NAME$&#10; $END$" description="TAP: GitOps Deliverable definition for one environment" toReformat="false" toShortenFQNames="true">
+    <variable name="WORKLOAD_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="GITOPS_SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="GITOPS_REPO_URL" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="ENV" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="NAMESPACE" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap ca certificate secret" value="apiVersion: v1&#10;kind: Secret&#10;metadata:&#10;&#9;name: $SECRET_NAME$&#10;type: service.binding/ca-certificates&#10;stringData:&#10;&#9;type: ca-certificates&#10;&#9;ca.crt: |&#10;&#9;&#9;# ...&#10;$END$" description="TAP: CA Certificate definition for service binding" toReformat="false" toShortenFQNames="true">
+    <variable name="SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap ca certificate service claim" value="- name: $CLAIM_NAME$&#10;  ref:&#10;    apiVersion: v1&#10;    kind: Secret&#10;    name: $CA_CERT_SECRET_NAME$&#10;$END$" description="TAP: Service claim for CA Certificate" toReformat="false" toShortenFQNames="true">
+    <variable name="CLAIM_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="CA_CERT_SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap database service claim" value="- name: $CLAIM_NAME$&#10;  ref:&#10;    apiVersion: services.apps.tanzu.vmware.com/v1alpha1&#10;    kind: ClassClaim&#10;    name: $DATABASE_SERVICE_CLASS_NAME$&#10;$END$" description="TAP: Service claim for Database (e.g. postgres)" toReformat="false" toShortenFQNames="true">
+    <variable name="CLAIM_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="DATABASE_SERVICE_CLASS_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap catalog" value="apiVersion: backstage.io/v1alpha1&#10;kind: Component&#10;metadata:&#10;  name: $NAME$&#10;  description: $DESCRIPTION$&#10;  tags: []&#10;  annotations:&#10;    'backstage.io/kubernetes-label-selector': 'app.kubernetes.io/part-of=$NAME$'&#10;spec:&#10;  type: service&#10;  lifecycle: experimental&#10;  owner: default-team&#10;$END$" description="TAP: Component catalog definition" toReformat="false" toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="DESCRIPTION" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap workload java" value="# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.6/tap/scc-workload-reference.html&#10;# https://cartographer.sh/docs/v0.7.0/reference/workload/&#10;apiVersion: carto.run/v1alpha1&#10;kind: Workload&#10;metadata:&#10;  name: $NAME$&#10;  labels:&#10;    app.kubernetes.io/part-of: $NAME$&#10;    apps.tanzu.vmware.com/workload-type: web&#10;spec:&#10;  build:&#10;    env:&#10;      - name: BP_JVM_VERSION&#10;        value: &quot;17&quot;&#10;  params:&#10;    - name: annotations&#10;      value:&#10;        autoscaling.knative.dev/min-scale: &quot;1&quot; # For rolling deployment&#10;  source:&#10;    git:&#10;      url: https://$HTTPS_REPO_URL$&#10;      ref:&#10;        branch: main&#10;    subPath: $SUB_DIRECTORY$ # only useful for monorepos&#10;  env: []&#10;  serviceClaims: []&#10;$END$" description="TAP: Workload definition for a java based application" toReformat="false" toShortenFQNames="true">
+    <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="HTTPS_REPO_URL" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="SUB_DIRECTORY" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap github knownhosts" value="# https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints&#10;github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl&#10;github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=&#10;github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=&#10;$END$" description="TAP: GitHub known hosts" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap sandbox kubeconfig" value="#!/bin/bash&#10;&#10;SCRIPT_DIR=&quot;$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&gt; /dev/null &amp;&amp; pwd)&quot;&#10;&#10;echo export KUBECONFIG=$(realpath &quot;$SCRIPT_DIR/../tap-config&quot;)&#10;$END$" description="TAP: Sandbox kubeconfig export" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap gitops serviceaccount annotations" value="# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.6/tap/namespace-provisioner-parameters.html#namespace-parameters&#10;SERVICE_ACCOUNT_SECRET=$(kubectl get sa default -o yaml | yq '.secrets[] | select(.name == &quot;$GITOPS_SECRET_NAME$&quot;) | .name' | tr -d '\n')&#10;if [ &quot;$SERVICE_ACCOUNT_SECRET&quot; != &quot;$GITOPS_SECRET_NAME$&quot; ]; then&#10;    echo &quot;The gitops secret should be associated with the default service account&quot;&#10;    echo &quot;Patching the service account via namespace provisioner annotations to include the $GITOPS_SECRET_NAME$ secret&quot;&#10;    kubectl annotate --overwrite ns apps param.nsp.tap/supply_chain_service_account.secrets='[&quot;registries-credentials&quot;, &quot;$GITOPS_SECRET_NAME$&quot;]'&#10;    kubectl annotate --overwrite ns apps param.nsp.tap/delivery_service_account.secrets='[&quot;registries-credentials&quot;, &quot;$GITOPS_SECRET_NAME$&quot;]'&#10;else&#10;    echo &quot;The gitops secret is associated with the default service account&quot;&#10;fi&#10;$END$" description="TAP: Configure GitOps secret for the default service account" toReformat="false" toShortenFQNames="true">
+    <variable name="GITOPS_SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap gitops public key" value="kubectl get secret &quot;$SECRET_NAME$&quot; -o yaml | yq '.data[&quot;identity.pub&quot;]' | base64 -d&#10;$END$" description="TAP: Extract GitOps SSH public key" toReformat="false" toShortenFQNames="true">
+    <variable name="SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap gitops secret script" value="#!/bin/bash&#10;&#10;set -e&#10;&#10;TMP_FOLDER=$(mktemp -d)&#10;trap &quot;rm -rf $TMP_FOLDER&quot; EXIT&#10;&#10;GIT_REPO_HOSTNAME=$GIT_REPO_HOSTNAME$&#10;SECRET_NAME=$SECRET_NAME$&#10;&#10;if kubectl get secret &quot;$SECRET_NAME&quot; &amp;&gt; /dev/null ; then&#10;    kubectl get secret &quot;$SECRET_NAME&quot; -o yaml | yq '.data[&quot;identity.pub&quot;]' | base64 -d&#10;    exit 0&#10;fi&#10;&#10;ssh-keygen \&#10;    -t rsa \&#10;    -C &quot;tap-gitops-ssh-auth&quot; \&#10;    -N &quot;&quot; \&#10;    -f &quot;$TMP_FOLDER/id_rsa&quot;&#10;&#10;INDENTED_PRIVATE_KEY=$(sed 's/^/    /' &quot;$TMP_FOLDER/id_rsa&quot;)&#10;INDENTED_PUBLIC_KEY=$(sed 's/^/    /' &quot;$TMP_FOLDER/id_rsa.pub&quot;)&#10;&#10;cat &lt;&lt;EOF | kubectl apply -f -&#10;# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.6/tap/scc-gitops-vs-regops.html#ssh-4&#10;apiVersion: v1&#10;kind: Secret&#10;metadata:&#10;  name: $SECRET_NAME # it must match the &quot;gitops_ssh_secret&quot; params in the workload&#10;  annotations:&#10;    tekton.dev/git-0: $GIT_REPO_HOSTNAME # make sure is just the hostname, no protocol&#10;type: kubernetes.io/ssh-auth&#10;stringData:&#10;  ssh-privatekey: |&#10;$INDENTED_PRIVATE_KEY&#10;  identity: |&#10;$INDENTED_PRIVATE_KEY&#10;  identity.pub: |&#10;$INDENTED_PUBLIC_KEY&#10;  known_hosts: |&#10;    # ... find out the known hosts public keys and put them here&#10;&#10;EOF&#10;&#10;cat &quot;$TMP_FOLDER/id_rsa.pub&quot;&#10;$END$" description="TAP: Script to generate GitOps SSH secret" toReformat="false" toShortenFQNames="true">
+    <variable name="GIT_REPO_HOSTNAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap sandbox patch podmemory" value="POD_MAX_MEMORY=$(kubectl get clusterpolicy sandbox-namespace-limits -o yaml | yq '.spec.rules[1].generate.data.spec.limits[] | select(.type ==&quot;Pod&quot;) | .max.memory ' | tr -d '\n')&#10;if [ &quot;$POD_MAX_MEMORY&quot; != &quot;2Gi&quot; ]; then&#10;    echo &quot;The Pod max memory should be set at least to 2Gi, instead was $POD_MAX_MEMORY&quot;&#10;    echo &quot;Patching the cluster policy&quot;&#10;    kubectl get clusterpolicy sandbox-namespace-limits -o yaml \&#10;        | yq eval '(.spec.rules[] | select(.name == &quot;deploy-limit-ranges&quot;) .generate.data.spec.limits[] | select(.type == &quot;Pod&quot;) .max.memory) = &quot;2Gi&quot;' - \&#10;        | kubectl apply -f -&#10;else&#10;    echo &quot;Pod max memory correctly set to 2Gi&quot;&#10;fi&#10;$END$" description="TAP: Sandbox patch for the Pod max memory issue (GitOps show-stopper)" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap smoke test get" value="APP_URL=$(kubectl get kservice $WORKLOAD$ -o yaml | yq '.status.url' | tr -d '\n' )&#10;EXPECTED=&quot;{\&quot;foo\&quot;:\&quot;bar\&quot;}&quot;&#10;ACTUAL=$(curl -s -XGET &quot;$APP_URL&quot;) # add --insecure for self-signed certs&#10;if [ &quot;$ACTUAL&quot; != &quot;$EXPECTED&quot; ]; then&#10;    echo &quot;Smoke test failed: expected \&quot;$EXPECTED\&quot; but was \&quot;$ACTUAL\&quot;&quot; 1&gt;&amp;2&#10;    exit 1&#10;fi&#10;&#10;echo &quot;Smoke test succeeded&quot;" description="TAP: perform a GET request via cURL as a smoke test" toReformat="false" toShortenFQNames="true">
+    <variable name="WORKLOAD" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap smoke test post" value="APP_URL=$(kubectl get kservice $WORKLOAD$ -o yaml | yq '.status.url' | tr -d '\n' )&#10;EXPECTED=&quot;{\&quot;foo\&quot;:\&quot;bar\&quot;}&quot;&#10;ACTUAL=$(curl -s -XPOST &quot;$APP_URL&quot; -H &quot;Content-Type: application/json&quot; -d &quot;...&quot;) # add --insecure for self-signed certs&#10;if [ &quot;$ACTUAL&quot; != &quot;$EXPECTED&quot; ]; then&#10;    echo &quot;Smoke test failed: expected \&quot;$EXPECTED\&quot; but was \&quot;$ACTUAL\&quot;&quot; 1&gt;&amp;2&#10;    exit 1&#10;fi&#10;&#10;echo &quot;Smoke test succeeded&quot;" description="TAP: perform a POST request via cURL as a smoke test" toReformat="false" toShortenFQNames="true">
+    <variable name="WORKLOAD" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap new spring web maven script" value="#!/bin/bash&#10;&#10;APP_NAME=${1:-&quot;demo&quot;}&#10;if [ -z &quot;$APP_NAME&quot; ]; then&#10;    echo &quot;Application name is required as first parameter&quot;&#10;    exit 1&#10;fi&#10;&#10;spring init -d=web --build=maven &quot;$APP_NAME&quot;&#10;$END$" description="Script to generate new spring boot web app + maven" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="KUBERNETES_RESOURCE" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap prepare env script" value="#!/bin/zsh&#10;&#10;NAMESPACE=$1&#10;GITOPS_SECRET_NAME=$GITOPS_SECRET_NAME$&#10;&#10;if [ -z &quot;$NAMESPACE&quot; ]; then&#10;    echo &quot;Namespace is required as first parameter&quot;&#10;    exit 1&#10;fi&#10;&#10;kubectl create ns &quot;$NAMESPACE&quot;&#10;kubectl label namespace &quot;$NAMESPACE&quot; apps.tanzu.vmware.com/tap-ns=&quot;&quot;&#10;&#10;kubectl get secret &quot;$GITOPS_SECRET_NAME&quot; -o yaml \&#10;    | yq 'del(.metadata[&quot;namespace&quot;,&quot;resourceVersion&quot;,&quot;uid&quot;,&quot;creationTimestamp&quot;])' \&#10;    | kubectl apply -n &quot;$NAMESPACE&quot; -f -&#10;&#10;kubectl annotate ns &quot;$NAMESPACE&quot; param.nsp.tap/supply_chain_service_account.secrets='[&quot;registries-credentials&quot;, &quot;$GITOPS_SECRET_NAME&quot;]'&#10;kubectl annotate ns &quot;$NAMESPACE&quot; param.nsp.tap/delivery_service_account.secrets='[&quot;registries-credentials&quot;, &quot;$GITOPS_SECRET_NAME&quot;]'&#10;$END$" description="TAP: Script to prepare new namespace (simulated environment)" toReformat="false" toShortenFQNames="true">
+    <variable name="GITOPS_SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+</templateSet>
