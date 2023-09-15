@@ -403,19 +403,19 @@
       <option name="SHELL_SCRIPT" value="true" />
     </context>
   </template>
-  <template name="tap smoke test get" value="APP_URL=$(kubectl get kservice $WORKLOAD$ -o yaml | yq '.status.url' | tr -d '\n' )&#10;EXPECTED=&quot;{\&quot;foo\&quot;:\&quot;bar\&quot;}&quot;&#10;ACTUAL=$(curl -s -XGET &quot;$APP_URL&quot;) # add --insecure for self-signed certs&#10;if [ &quot;$ACTUAL&quot; != &quot;$EXPECTED&quot; ]; then&#10;    echo &quot;Smoke test failed: expected \&quot;$EXPECTED\&quot; but was \&quot;$ACTUAL\&quot;&quot; 1&gt;&amp;2&#10;    exit 1&#10;fi&#10;&#10;echo &quot;Smoke test succeeded&quot;" description="TAP: perform a GET request via cURL as a smoke test" toReformat="false" toShortenFQNames="true">
+  <template name="tap smoke test get script" value="#!/bin/bash&#10;&#10;APP_URL=${1:-$(kubectl get kservice $WORKLOAD$ -o yaml | yq '.status.url' | tr -d '\n' )}&#10;EXPECTED=&quot;{\&quot;foo\&quot;:\&quot;bar\&quot;}&quot;&#10;ACTUAL=$(curl -s -XGET &quot;$APP_URL&quot;) # add --insecure for self-signed certs&#10;if [ &quot;$ACTUAL&quot; != &quot;$EXPECTED&quot; ]; then&#10;    echo &quot;Smoke test failed: expected \&quot;$EXPECTED\&quot; but was \&quot;$ACTUAL\&quot;&quot; 1&gt;&amp;2&#10;    exit 1&#10;fi&#10;&#10;echo &quot;Smoke test succeeded&quot;" description="TAP: Script to perform a GET request via cURL as a smoke test" toReformat="false" toShortenFQNames="true">
     <variable name="WORKLOAD" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
       <option name="SHELL_SCRIPT" value="true" />
     </context>
   </template>
-  <template name="tap smoke test post" value="APP_URL=$(kubectl get kservice $WORKLOAD$ -o yaml | yq '.status.url' | tr -d '\n' )&#10;EXPECTED=&quot;{\&quot;foo\&quot;:\&quot;bar\&quot;}&quot;&#10;ACTUAL=$(curl -s -XPOST &quot;$APP_URL&quot; -H &quot;Content-Type: application/json&quot; -d &quot;...&quot;) # add --insecure for self-signed certs&#10;if [ &quot;$ACTUAL&quot; != &quot;$EXPECTED&quot; ]; then&#10;    echo &quot;Smoke test failed: expected \&quot;$EXPECTED\&quot; but was \&quot;$ACTUAL\&quot;&quot; 1&gt;&amp;2&#10;    exit 1&#10;fi&#10;&#10;echo &quot;Smoke test succeeded&quot;" description="TAP: perform a POST request via cURL as a smoke test" toReformat="false" toShortenFQNames="true">
+  <template name="tap smoke test post script" value="#!/bin/bash&#10;&#10;APP_URL=${1:-$(kubectl get kservice $WORKLOAD$ -o yaml | yq '.status.url' | tr -d '\n' )}&#10;EXPECTED=&quot;{\&quot;foo\&quot;:\&quot;bar\&quot;}&quot;&#10;ACTUAL=$(curl -s -XPOST &quot;$APP_URL&quot; -H &quot;Content-Type: application/json&quot; -d &quot;...&quot;) # add --insecure for self-signed certs&#10;if [ &quot;$ACTUAL&quot; != &quot;$EXPECTED&quot; ]; then&#10;    echo &quot;Smoke test failed: expected \&quot;$EXPECTED\&quot; but was \&quot;$ACTUAL\&quot;&quot; 1&gt;&amp;2&#10;    exit 1&#10;fi&#10;&#10;echo &quot;Smoke test succeeded&quot;" description="TAP: Script to perform a POST request via cURL as a smoke test" toReformat="false" toShortenFQNames="true">
     <variable name="WORKLOAD" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
       <option name="SHELL_SCRIPT" value="true" />
     </context>
   </template>
-  <template name="tap new spring web maven script" value="#!/bin/bash&#10;&#10;APP_NAME=${1:-&quot;demo&quot;}&#10;if [ -z &quot;$APP_NAME&quot; ]; then&#10;    echo &quot;Application name is required as first parameter&quot;&#10;    exit 1&#10;fi&#10;&#10;spring init -d=web --build=maven &quot;$APP_NAME&quot;&#10;$END$" description="Script to generate new spring boot web app + maven" toReformat="false" toShortenFQNames="true">
+  <template name="tap new spring web maven script" value="#!/bin/bash&#10;&#10;APP_NAME=${1:-&quot;demo&quot;}&#10;if [ -z &quot;$APP_NAME&quot; ]; then&#10;    echo &quot;Application name is required as first parameter&quot;&#10;    exit 1&#10;fi&#10;&#10;spring init -d=web,devtools --build=maven &quot;$APP_NAME&quot;&#10;$END$" description="Script to generate new spring boot web app + maven" toReformat="false" toShortenFQNames="true">
     <context>
       <option name="ANY_OPENAPI_JSON_FILE" value="false" />
       <option name="ANY_OPENAPI_YAML_FILE" value="false" />
@@ -453,6 +453,272 @@
     <variable name="GITOPS_SECRET_NAME" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
       <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap spring greetings" value="import org.springframework.web.bind.annotation.GetMapping;&#10;import org.springframework.web.bind.annotation.RestController;&#10;&#10;@RestController&#10;class GreetingsApi {&#10;&#10;    @GetMapping(&quot;/&quot;)&#10;    Greeting greet() {&#10;        return new Greeting(&quot;Hello World!&quot;);&#10;    }&#10;&#10;    record Greeting(String content) {}&#10;}" description="TAP: Example of a Greetings Api on Spring Boot" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+    </context>
+  </template>
+  <template name="tap pipeline java maven" value="# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.6/tap/scc-ootb-supply-chain-testing.html?hWord=N4IghgNiBcIC4FMDOcCWA7A5gfQA6twQgwWwFsw4BjACwxwjACMikQBfIA&#10;apiVersion: tekton.dev/v1beta1&#10;kind: Pipeline&#10;metadata:&#10;  name: $APP_NAME$-test-pipeline&#10;  labels:&#10;    apps.tanzu.vmware.com/pipeline: test&#10;spec:&#10;  params:&#10;    - name: source-url&#10;    - name: source-revision&#10;  tasks:&#10;    - name: test&#10;      params:&#10;        - name: source-url&#10;          value: $(params.source-url)&#10;        - name: source-revision&#10;          value: $(params.source-revision)&#10;      taskSpec:&#10;        params:&#10;          - name: source-url&#10;          - name: source-revision&#10;        steps:&#10;          - name: test&#10;            image: bellsoft/liberica-openjdk-alpine:18&#10;            script: |-&#10;              cd `mktemp -d`&#10;              wget -qO- $(params.source-url) | tar xvz -m&#10;              cd $SUB_DIRECTORY$  # useful for monorepos&#10;              ./mvnw verify" description="TAP: Pipeline defintion for a Java based application using maven" toReformat="false" toShortenFQNames="true">
+    <variable name="APP_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="SUB_DIRECTORY" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap sandbox install ootb-test script" value="# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.6/tap/scc-install-ootb-sc-wtest.html&#10;#!/bin/bash&#10;&#10;if tanzu apps cluster-supply-chains get source-test-to-url &amp;&gt; /dev/null ; then&#10;    echo &quot;Supply chain already installed&quot;&#10;    exit 0&#10;fi&#10;&#10;TMP_FOLDER=$(mktemp -d)&#10;trap &quot;rm -rf $TMP_FOLDER&quot; EXIT&#10;&#10;PACKAGE_VERSION=$(tanzu package installed get ootb-supply-chain-basic -n tap-install -o yaml | yq '.[0].package-version')&#10;VALUES_FILE=&quot;$TMP_FOLDER/ootb-supply-chain-testing-values.yaml&quot;&#10;&#10;tanzu package installed get ootb-supply-chain-basic -n tap-install --values &gt; &quot;$VALUES_FILE&quot;&#10;&#10;tanzu package install ootb-supply-chain-testing \&#10;    --package ootb-supply-chain-testing.tanzu.vmware.com \&#10;    --version &quot;$PACKAGE_VERSION&quot; \&#10;    --namespace tap-install \&#10;    --values-file &quot;$VALUES_FILE&quot;&#10;" description="TAP:  Script for installing the OOTB supply chain with tests" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="KUBERNETES_RESOURCE" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap pipeline java testcontainers" value="# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.6/tap/scc-ootb-supply-chain-testing.html?hWord=N4IghgNiBcIC4FMDOcCWA7A5gfQA6twQgwWwFsw4BjACwxwjACMikQBfIA&#10;apiVersion: tekton.dev/v1beta1&#10;kind: Pipeline&#10;metadata:&#10;  name: $PIPELINE_NAME$-test-pipeline&#10;  labels:&#10;    apps.tanzu.vmware.com/pipeline: test&#10;spec:&#10;  params:&#10;    - name: source-url&#10;    - name: source-revision&#10;  tasks:&#10;    - name: test&#10;      params:&#10;        - name: source-url&#10;          value: $(params.source-url)&#10;        - name: source-revision&#10;          value: $(params.source-revision)&#10;      taskSpec:&#10;        params:&#10;          - name: source-url&#10;          - name: source-revision&#10;        steps:&#10;          - name: test&#10;            image: bellsoft/liberica-openjdk-alpine:18&#10;            script: |-&#10;              cd `mktemp -d`&#10;              wget -qO- $(params.source-url) | tar xvz -m&#10;              cd $SUB_DIRECTORY$ # useful for monorepos&#10;              ./mvnw verify -DexcludedGroups=acceptance&#10;              ./mvnw verify -Dgroups=acceptance&#10;            volumeMounts:&#10;              - mountPath: /var/run/&#10;                name: dind-socket&#10;        sidecars:&#10;          - image: docker:20.10.17-dind&#10;            name: docker&#10;            securityContext:&#10;              privileged: true&#10;            volumeMounts:&#10;              - mountPath: /var/run/&#10;                name: dind-socket&#10;        volumes:&#10;          - name: dind-socket&#10;            emptyDir: {}&#10;" description="TAP: Pipeline definition for a Java based application using Maven and Testcontainers with DinD" toReformat="false" toShortenFQNames="true">
+    <variable name="PIPELINE_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <variable name="SUB_DIRECTORY" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap sandbox patch podsecurity" value="POD_SECURITY=$(kubectl get ns $NAMESPACE$ -o yaml | yq '.metadata.labels[&quot;pod-security.kubernetes.io/enforce&quot;]' | tr -d '\n')&#10;if [ &quot;$POD_SECURITY&quot; == &quot;baseline&quot; ]; then&#10;    echo &quot;The Pod security policy should not be set on the $NAMESPACE$ namespace, but it was&quot;&#10;    echo &quot;Patching the cluster policy&quot;&#10;    kubectl get clusterpolicy sandbox-security-policies -o yaml \&#10;        | yq '.spec.rules[0].exclude = { &quot;any&quot;: [{ &quot;resources&quot;: { &quot;namespaces&quot;: [&quot;$NAMESPACE$&quot;]  } }]}' \&#10;        | kubectl apply -f -&#10;    echo &quot;Removing the pod security label from the $NAMESPACE$ namespace&quot;&#10;    kubectl label namespace $NAMESPACE$ &quot;pod-security.kubernetes.io/enforce&quot;-&#10;else&#10;    echo &quot;Pod security policy is configured correctly&quot;&#10;fi" description="TAP: Sandbox patch for the Pod security issue (DinD show-stopper)" toReformat="false" toShortenFQNames="true">
+    <variable name="NAMESPACE" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap deploy mock-server" value="apiVersion: apps/v1&#10;kind: Deployment&#10;metadata:&#10;  name: $SERVER_NAME$&#10;  labels:&#10;    app: $SERVER_NAME$&#10;spec:&#10;  replicas: 1&#10;  selector:&#10;    matchLabels:&#10;      app: $SERVER_NAME$&#10;  template:&#10;    metadata:&#10;      name: $SERVER_NAME$&#10;      labels:&#10;        app: $SERVER_NAME$&#10;    spec:&#10;      containers:&#10;        - name: $SERVER_NAME$&#10;          image: mockserver/mockserver:5.15.0&#10;          imagePullPolicy: IfNotPresent&#10;          env:&#10;            - name: MOCKSERVER_INITIALIZATION_JSON_PATH&#10;              value: &quot;/config/stubs.json&quot;&#10;            - name: SERVER_PORT&#10;              value: &quot;1080&quot;&#10;          volumeMounts:&#10;            - name: config&#10;              mountPath: /config&#10;          securityContext:&#10;            runAsUser: 65534&#10;          ports:&#10;            - name: service-port&#10;              containerPort: 1080&#10;              protocol: TCP&#10;          readinessProbe:&#10;            tcpSocket:&#10;              port: service-port&#10;            initialDelaySeconds: 2&#10;            periodSeconds: 2&#10;            successThreshold: 1&#10;            failureThreshold: 10&#10;          livenessProbe:&#10;            tcpSocket:&#10;              port: service-port&#10;            initialDelaySeconds: 10&#10;            periodSeconds: 5&#10;            successThreshold: 1&#10;            failureThreshold: 10&#10;      volumes:&#10;        - name: config&#10;          configMap:&#10;            name: $SERVER_NAME$-config&#10;      restartPolicy: Always&#10;---&#10;apiVersion: v1&#10;kind: Service&#10;metadata:&#10;  name: $SERVER_NAME$&#10;spec:&#10;  selector:&#10;    app: $SERVER_NAME$&#10;  ports:&#10;    - name: &quot;service-port&quot;&#10;      protocol: TCP&#10;      port: 80&#10;      targetPort: 1080&#10;  type: ClusterIP&#10;---&#10;apiVersion: v1&#10;kind: ConfigMap&#10;metadata:&#10;  name: $SERVER_NAME$-config&#10;data:&#10;  stubs.json: |&#10;    [&#10;      {&#10;        &quot;httpRequest&quot;: {&#10;          &quot;path&quot;: &quot;/&quot;,&#10;          &quot;method&quot;: &quot;POST&quot;&#10;        },&#10;        &quot;httpResponse&quot;: {&#10;          &quot;body&quot;: &quot;SGVsbG8gV29ybGQh&quot;&#10;        }&#10;      }&#10;    ]&#10;" description="TAP: Deployment definition of a server stub using mock-server" toReformat="false" toShortenFQNames="true">
+    <variable name="SERVER_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="KUBERNETES_RESOURCE" value="true" />
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap smoke test puppeteer" value="import puppeteer from &quot;puppeteer&quot;;&#10;import {getDocument, queries} from &quot;pptr-testing-library&quot;;&#10;&#10;const url = process.argv[2];&#10;if (!url) {&#10;    console.error('Please provide a URL as the first parameter.');&#10;    process.exit(1);&#10;}&#10;&#10;(async () =&gt; {&#10;    const browser = await puppeteer.launch({ headless: true });&#10;    const page = await browser.newPage();&#10;    await page.goto(url);&#10;    const document = await getDocument(page);&#10;    await queries.findByText(document,/Backend server is UP/);&#10;    await browser.close();&#10;})();" description="TAP: run a puppeteer script as a smoke test" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="HTML" value="true" />
+      <option name="JAVA_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap workload configure script" value="#!/bin/bash&#10;&#10;set -e&#10;&#10;SCRIPT_DIR=&quot;$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&gt; /dev/null &amp;&amp; pwd)&quot;&#10;&#10;WORKLOAD=&quot;$SCRIPT_DIR/../config/$WORKLOAD_FILE_NAME$.yaml&quot;&#10;&#10;kubectl delete -f &quot;$WORKLOAD&quot; || true&#10;kubectl apply -f &quot;$WORKLOAD&quot;" description="TAP : Script to (re)apply a workload configuration on the platform" toReformat="false" toShortenFQNames="true">
+    <variable name="WORKLOAD_FILE_NAME" expression="" defaultValue="" alwaysStopAt="true" />
+    <context>
+      <option name="SHELL_SCRIPT" value="true" />
+    </context>
+  </template>
+  <template name="tap workload has-tests" value="apps.tanzu.vmware.com/has-tests: &quot;true&quot;  # docs glitch: they show the value witout quotes" description="TAP: Label that ensure the workload wil be using the ootb supply chain with testing" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="Handlebars" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap demo testcontainers deps" value="&lt;dependency&gt;&#10;    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&#10;    &lt;artifactId&gt;spring-boot-testcontainers&lt;/artifactId&gt;&#10;    &lt;scope&gt;test&lt;/scope&gt;&#10;&lt;/dependency&gt;&#10;&lt;dependency&gt;&#10;    &lt;groupId&gt;org.testcontainers&lt;/groupId&gt;&#10;    &lt;artifactId&gt;mockserver&lt;/artifactId&gt;&#10;    &lt;version&gt;1.18.3&lt;/version&gt;&#10;    &lt;scope&gt;test&lt;/scope&gt;&#10;&lt;/dependency&gt;&#10;&lt;dependency&gt;&#10;    &lt;groupId&gt;org.mock-server&lt;/groupId&gt;&#10;    &lt;artifactId&gt;mockserver-client-java&lt;/artifactId&gt;&#10;    &lt;version&gt;5.15.0&lt;/version&gt;&#10;    &lt;scope&gt;test&lt;/scope&gt;&#10;&lt;/dependency&gt;&#10;&lt;dependency&gt;&#10;    &lt;groupId&gt;net.javacrumbs.json-unit&lt;/groupId&gt;&#10;    &lt;artifactId&gt;json-unit-assertj&lt;/artifactId&gt;&#10;    &lt;version&gt;3.0.0&lt;/version&gt;&#10;    &lt;scope&gt;test&lt;/scope&gt;&#10;&lt;/dependency&gt;" description="TAP: Dependencies needed for the testcontainers demo" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="MAVEN" value="true" />
+    </context>
+  </template>
+  <template name="tap demo testcontainers acceptance v1" value="import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;&#10;import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;&#10;&#10;import org.junit.jupiter.api.Test;&#10;import org.springframework.beans.factory.annotation.Autowired;&#10;import org.springframework.boot.test.context.SpringBootTest;&#10;import org.springframework.boot.test.web.client.TestRestTemplate;&#10;import org.springframework.boot.test.web.server.LocalServerPort;&#10;&#10;@SpringBootTest(&#10;    webEnvironment = RANDOM_PORT&#10;)&#10;class AcceptanceTests {&#10;&#10;    @LocalServerPort&#10;    private int port;&#10;&#10;    @Autowired&#10;    private TestRestTemplate client;&#10;&#10;    @Test&#10;    void greetingsAreEncoded() {&#10;        var greeting = client.getForObject(baseUrl(), String.class);&#10;        assertThatJson(greeting).isEqualTo(&quot;&quot;&quot;&#10;            {&#10;                &quot;original&quot;: &quot;Hello World!&quot;,&#10;                &quot;encoded&quot;: &quot;SGVsbG8gV29ybGQh&quot;&#10;            }&#10;        &quot;&quot;&quot;);&#10;    }&#10;&#10;    private String baseUrl() {&#10;        return &quot;http://localhost:%s&quot;.formatted(port);&#10;    }&#10;}" description="TAP: Acceptance Test v1 needed for the testcontainers demo" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+    </context>
+  </template>
+  <template name="tap demo testcontainers encoding server" value="import static org.mockserver.model.HttpRequest.request;&#10;import static org.mockserver.model.HttpResponse.response;&#10;&#10;import org.junit.jupiter.api.extension.AfterAllCallback;&#10;import org.junit.jupiter.api.extension.BeforeAllCallback;&#10;import org.junit.jupiter.api.extension.ExtensionContext;&#10;import org.mockserver.client.MockServerClient;&#10;import org.testcontainers.containers.MockServerContainer;&#10;import org.testcontainers.utility.DockerImageName;&#10;&#10;class EncodingApiServer implements BeforeAllCallback, AfterAllCallback {&#10;&#10;    private final MockServerContainer mockServer = new MockServerContainer(&#10;        DockerImageName.parse(&quot;mockserver/mockserver:5.15.0&quot;)&#10;    );&#10;&#10;    public String baseUrl() {&#10;        return mockServer.getEndpoint();&#10;    }&#10;&#10;    @Override&#10;    public void beforeAll(ExtensionContext extensionContext) {&#10;        mockServer.start();&#10;        setupStubs();&#10;    }&#10;&#10;    @Override&#10;    public void afterAll(ExtensionContext extensionContext) {&#10;        mockServer.stop();&#10;    }&#10;&#10;    private void setupStubs() {&#10;        new MockServerClient(mockServer.getHost(), mockServer.getServerPort())&#10;            .when(request().withPath(&quot;/&quot;).withMethod(&quot;POST&quot;))&#10;            .respond(response().withBody(&quot;SGVsbG8gV29ybGQh&quot;));&#10;    }&#10;}" description="TAP: Server mock needed for the testcontainers demo" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+    </context>
+  </template>
+  <template name="tap demo testcontainers encoding server junit" value="@RegisterExtension // must be static to execute beforeAll, afterAll&#10;public final static EncodingApiServer encodingApiServer = new EncodingApiServer();&#10;&#10;@DynamicPropertySource&#10;static void encodingApiProperties(DynamicPropertyRegistry registry) {&#10;    registry.add(&quot;encoding-api.uri&quot;, encodingApiServer::baseUrl);&#10;}" description="TAP: JUnit registration of the Server mock needed for the testcontainers demo" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+    </context>
+  </template>
+  <template name="tap demo testcontainers encoding client" value="import org.springframework.boot.web.client.RestTemplateBuilder;&#10;import org.springframework.stereotype.Component;&#10;import org.springframework.web.client.RestTemplate;&#10;&#10;@Component&#10;class EncodingApiClient {&#10;&#10;    private final RestTemplate client;&#10;&#10;    public EncodingApiClient(RestTemplateBuilder clientBuilder, EncodingApiConfig config) {&#10;        this.client = clientBuilder.rootUri(config.uri()).build();&#10;    }&#10;&#10;    String encode(String input) {&#10;        return client.postForObject(&quot;/&quot;, input, String.class);&#10;    }&#10;}&#10;" description="TAP: Client needed for the testcontainers demo" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+    </context>
+  </template>
+  <template name="tap demo testcontainers encoding config" value="import org.springframework.boot.context.properties.ConfigurationProperties;&#10;&#10;@ConfigurationProperties(&quot;encoding-api&quot;)&#10;record EncodingApiConfig(String uri) {}" description="TAP: Config properties needed for the testcontainers demo" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="true" />
+    </context>
+  </template>
+  <template name="tap pipeline maven verify exclude acceptance" value="./mvnw verify -DexcludedGroups=acceptance" description="TAP: Run maven verify but excluding the acceptance tests tag" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="Handlebars" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
+    </context>
+  </template>
+  <template name="tap pipeline dind" value="steps:&#10;  - name: test (dind)&#10;    image: bellsoft/liberica-openjdk-alpine:18&#10;    script: |-&#10;      echo &quot;It works&quot;   &#10;    volumeMounts:&#10;      - mountPath: /var/run/&#10;        name: dind-socket&#10;sidecars:&#10;  - image: docker:20.10.17-dind&#10;    name: docker&#10;    securityContext:&#10;      privileged: true&#10;    volumeMounts:&#10;      - mountPath: /var/run/&#10;        name: dind-socket&#10;volumes:&#10;  - name: dind-socket&#10;    emptyDir: {}" description="TAP: Configure a pipeline in order to use DinD (Docker-In-Docker)" toReformat="false" toShortenFQNames="true">
+    <context>
+      <option name="ANY_OPENAPI_JSON_FILE" value="false" />
+      <option name="ANY_OPENAPI_YAML_FILE" value="false" />
+      <option name="CSS" value="false" />
+      <option name="CUCUMBER_FEATURE_FILE" value="false" />
+      <option name="ECMAScript6" value="false" />
+      <option name="GENERAL_JSON_FILE" value="false" />
+      <option name="GENERAL_YAML_FILE" value="false" />
+      <option name="GO_TEMPLATE" value="false" />
+      <option name="GROOVY" value="false" />
+      <option name="HELM_TEMPLATE" value="false" />
+      <option name="HTML" value="false" />
+      <option name="HTTP_CLIENT_ENVIRONMENT" value="false" />
+      <option name="Handlebars" value="false" />
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_SCRIPT" value="false" />
+      <option name="JSON" value="false" />
+      <option name="JSP" value="false" />
+      <option name="KOTLIN" value="false" />
+      <option name="MAVEN" value="false" />
+      <option name="OTHER" value="true" />
+      <option name="PROTO" value="false" />
+      <option name="PROTOTEXT" value="false" />
+      <option name="Properties" value="false" />
+      <option name="QUTE" value="false" />
+      <option name="REQUEST" value="false" />
+      <option name="SQL" value="false" />
+      <option name="TypeScript" value="false" />
+      <option name="Vue" value="false" />
+      <option name="XML" value="false" />
+      <option name="XML_ATTRIBUTE" value="false" />
     </context>
   </template>
 </templateSet>
